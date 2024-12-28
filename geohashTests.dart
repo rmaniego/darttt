@@ -6875,8 +6875,7 @@ void main() {
   };
 
 	int precision = 10;
-	int distanceThreshold = 100;
-	int gridPrecision = 1000000;
+	int _distanceThreshold = 100;
   
 	String composition = "Biodegradable";
 	
@@ -6891,7 +6890,7 @@ void main() {
 		double lon1 = value["origin_longitude"];
 		double lat1 = value["origin_latitude"];
 		double distance = value["distance_in_meters"];
-		if (distance < distanceThreshold) {
+		if (distance < _distanceThreshold) {
 			String hashed1 = geoHasher.encode(lon1, lat1, precision: precision);
 			List<double> geoHashed1 = geoHasher.decode(hashed1);
 			lon1 = geoHashed1[0];
@@ -6948,7 +6947,7 @@ void main() {
 		double lat2 = tValue["target_latitude"];
 		
 		double distance = tValue["distance_in_meters"];
-		if (distance < distanceThreshold) {
+		if (distance < _distanceThreshold) {
 		
 			String hashed1 = geoHasher.encode(lon1, lat1, precision: precision);
 			List<double> geoHashed1 = geoHasher.decode(hashed1);
@@ -6960,8 +6959,8 @@ void main() {
 			lon2 = geoHashed2[0];
 			lat2 = geoHashed2[1];
 			
-			double match1 = haversineDistance(lat1, lon1, lat0, lon0);
-			double match2 = haversineDistance(lat2, lon2, lat0, lon0);
+			double match1 = _haversineDistance(lat1, lon1, lat0, lon0);
+			double match2 = _haversineDistance(lat2, lon2, lat0, lon0);
 			if (match1 < closestMatch[8]) {
 				closestMatch = [trackUuid, hashed4, lon1, lat1, hashed1, lon2, lat2, hashed2, match1];
 			} else if (match2 < closestMatch[8]) {
@@ -7046,74 +7045,6 @@ void main() {
 	print(path);
 }
 
-List<String> _runAStar(Map<String, dynamic> graph, String origin, String target) {
-	
-	Map<String, double> heuristics = _generateHeuristics(graph, target);
-
-	var pq = PriorityQueue<List<dynamic>>((a, b) {
-		double priorityA = a[0] + a[1];
-		double priorityB = b[0] + b[1];
-		
-		return priorityA.compareTo(priorityB);
-	  });
-	/// print(heuristics);
-	
-	int fringe = 0;
-	int nodeCount = 0;
-	
-	int looped = 0;
-	int maxLoop = 1000;
-	List<String> path = [];
-	
-	double tempHOrigin = heuristics[origin] ?? 0.0;
-	pq.put([tempHOrigin, 0.0, [origin]]);
-	while (!pq.isEmpty) {
-		if (looped>=maxLoop) break;
-		looped++;
-		
-		List<dynamic> track = pq.get();
-
-		double distanceGN = track[1];
-		path = track[2];
-		
-		String nextNode = path.last;
-		if (nextNode == target) break;
-		
-		fringe++;
-		List<String> neighbors = _getNeighbors(graph, nextNode);
-		for (String neighbor in neighbors) {
-			nodeCount++;
-			
-			Map<String, dynamic> data1 = graph[nextNode] ?? {};
-			Map<String, dynamic> data2 = data1["paths"] ?? {};
-			Map<String, dynamic> data3 = data2[neighbor] ?? {};
-			double pathWeight = data3["distance"] ?? 0.0;
-			distanceGN = distanceGN + pathWeight;
-			
-			double tempH = heuristics[neighbor] ?? 0.0;
-			double distanceFN = distanceGN + tempH;
-			
-			List<String> newPath = [];
-			newPath.addAll(path);
-			newPath.add(neighbor);
-			
-			pq.put([distanceFN, distanceGN, newPath]);
-		}
-	}
-	
-	print("Fringe: $fringe");
-	print("Nodes: $nodeCount");
-	
-	if (path.length > 1) {
-		if (path[0] == origin && path.last == target) {
-			return path;
-		}
-	}
-	
-	return [];
-
-}
-
 List<String> _getNeighbors(Map<String, dynamic> graph, String target) {
 	List<String> neighbors = [];
 	
@@ -7150,7 +7081,7 @@ Map<String, double> _generateHeuristics(Map<String, dynamic> graph, String targe
 	return heuristics;
 }
 
-double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
   const double R = 6371;
   double dLat = (lat2 - lat1) * (3.141592653589793 / 180.0);
   double dLon = (lon2 - lon1) * (3.141592653589793 / 180.0);
